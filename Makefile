@@ -23,7 +23,7 @@ clean:
 run: $(TARGET)
 	./$(TARGET) $(AUDIO_FILE)
 
-test: $(TARGET)
-	./$(TARGET) 2hxhejekdjhr.wav
+bear: clean
+	bear -- make
 
 .PHONY: all clean run test
