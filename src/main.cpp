@@ -1,10 +1,6 @@
-#include "audio_reader.hpp"
-#include "note_converter.hpp"
-#include "pitch_detector.hpp"
-#include "utils.hpp"
+#include "audio_processor.hpp"
 #include <iomanip>
 #include <iostream>
-#include <vector>
 
 int main(int argc, char *argv[]) {
   if (argc != 2) {
@@ -12,32 +8,20 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  // Leer audio
-  AudioReader reader;
-  std::vector<double> audioData;
-  double sampleRate;
-  if (!reader.read(argv[1], audioData, sampleRate)) {
+  AudioProcessor processor;
+  if (!processor.processFile(argv[1])) {
     return 1;
   }
 
-  // Parámetros de procesamiento
-  const int frameSize = 2048;
-  const int hopSize = frameSize / 4;
-  PitchDetector detector(sampleRate, frameSize);
-
-  // Procesar por frames
-  for (size_t start = 0; start + frameSize <= audioData.size();
-       start += hopSize) {
-    std::vector<double> frame(audioData.begin() + start,
-                              audioData.begin() + start + frameSize);
-
-    applyHannWindow(frame);
-    double freq = detector.detect(frame);
-    std::string note = NoteConverter::frequencyToNote(freq);
-
-    double time = start / sampleRate;
-    std::cout << std::fixed << std::setprecision(3) << time << "\t" << freq
-              << "\t" << note << std::endl;
+  std::cout << "\nNOTAS DEL ARCHIVO\n";
+  for (const auto &event : processor.getNoteEvents()) {
+    double duration = event.endTime - event.startTime;
+    std::cout << std::fixed << std::setprecision(3) << "Nota: " << std::setw(8)
+              << std::left << event.note << " Inicio: " << std::setw(6)
+              << event.startTime << "s"
+              << " Duración: " << std::setw(6) << duration << "s"
+              << " Confianza: " << std::setw(5) << std::setprecision(1)
+              << event.confidence << "%\n";
   }
 
   return 0;
