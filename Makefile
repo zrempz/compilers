@@ -3,7 +3,7 @@ CFLAGS = -std=c++17 -Wall -Wextra -O3 -Iinclude
 LDFLAGS = -lsndfile
 SRC_DIR = src
 BUILD_DIR = build
-TARGET = detector.out
+TARGET = compiler.out
 
 SOURCES = $(wildcard $(SRC_DIR)/*.cpp)
 OBJECTS = $(patsubst $(SRC_DIR)/%.cpp, $(BUILD_DIR)/%.o, $(SOURCES))

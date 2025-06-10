@@ -1,8 +1,12 @@
 #include "audio_processor.hpp"
 #include "audio_reader.hpp"
 #include "note_converter.hpp"
+#include "sound_delimiters.hpp"
 #include "utils.hpp"
 #include <algorithm>
+#include <fstream>
+#include <iomanip>
+#include <iostream>
 #include <map>
 
 const int HISTORY_SIZE = 5;
@@ -10,7 +14,8 @@ const int HISTORY_SIZE = 5;
 AudioProcessor::AudioProcessor(int frameSize, int hopSizeDivider)
     : frameSize_(frameSize), hopSize_(frameSize / hopSizeDivider) {
   // Inicializamos la cola con HISTORY_SIZE elementos "Silence"
-  noteHistory_ = std::deque<std::string>(HISTORY_SIZE, "Silence");
+  noteHistory_ = std::deque<std::string>(
+      HISTORY_SIZE, sound_delimiters::statement_delimiter.data());
 }
 
 bool AudioProcessor::processFile(const std::string &filename) {
@@ -75,4 +80,38 @@ std::string AudioProcessor::smoothNote(const std::string &currentNote) {
 
 const std::vector<NoteEvent> &AudioProcessor::getNoteEvents() const {
   return noteEvents_;
+}
+
+bool AudioProcessor::saveNoteEventsToFile(const std::string &filename) const {
+  std::ofstream file(filename);
+  if (!file.is_open()) {
+    return false;
+  }
+
+  for (const auto &event : noteEvents_) {
+    if (event.note == sound_delimiters::space_delimiter) {
+      file << " ";
+      continue;
+    }
+
+    if (event.note == sound_delimiters::statement_delimiter) {
+      file << "\n";
+      continue;
+    }
+    file << event.note;
+  }
+
+  return true;
+}
+
+void AudioProcessor::printNoteEvents() {
+  for (const auto &event : noteEvents_) {
+    double duration = event.endTime - event.startTime;
+    std::cout << std::fixed << std::setprecision(3) << "Nota: " << std::setw(8)
+              << std::left << event.note << " Inicio: " << std::setw(6)
+              << event.startTime << "s"
+              << " Duración: " << std::setw(6) << duration << "s"
+              << " Confianza: " << std::setw(5) << std::setprecision(1)
+              << event.confidence << "%\n";
+  }
 }
